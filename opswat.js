@@ -91,7 +91,6 @@ class Opswat {
     initQueue() {
         setInterval(async ()=> {
             await this.updateFilesStatus();
-            //logger.info(this.queue);
             await this.processScannedFiles();
         },this.statusInterval)
     }

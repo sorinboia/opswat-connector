@@ -1,10 +1,17 @@
+const argv = require('yargs').argv
+
+
+
 let config = {};
 
 config.opswat = {
-    url: 'http://10.241.99.2:8008/file',
+    url: argv.opswat,
     fileStatusReps: 24,
     fileStatusInterval: 5000
 };
 
+config.backend = {
+
+};
 
 module.exports = config;

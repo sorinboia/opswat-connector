@@ -48,7 +48,7 @@ app.post('/*',upload.single('file'), async (req, res) => {
 
             if (scan.sanitized_url) options.fileLocation = scan.sanitized_url;
             const result = await backend.uploadFile(options);
-            logger.info(`<${filename}>result.data`);
+            logger.info(`<${filename}>result.data `);
             res.send(result.data);
             break;
         case 'Blocked':
