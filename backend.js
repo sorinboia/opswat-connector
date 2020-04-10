@@ -1,12 +1,13 @@
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
-const logger = require('./logger');
+const config = require('./config');
+
 
 class Backend {
 
     constructor({server,filesLocation}) {
-        this.filesLocation = filesLocation || './';
+        this.filesLocation = filesLocation ;
         this.server = server;
     }
 
@@ -41,4 +42,7 @@ class Backend {
 }
 
 
-module.exports = Backend;
+module.exports = new Backend({
+    server:config.backend.server,
+    filesLocation: config.filesLocation
+});

@@ -5,7 +5,7 @@ const logger = createLogger({
     level: 'info',
     format: format.combine(
         //format.json(),
-        format.timestamp(),
+        //format.timestamp(),
         format.prettyPrint(),
 
     ),

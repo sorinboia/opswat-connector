@@ -1,22 +1,12 @@
 const express = require('express');
 const logger = require('./logger');
-const multer  = require('multer');
 const fs = require('fs');
+const Opswat = require('./opswat');
+const backend = require('./backend');
+const config  = require('./config');
 
-const filesFolder = './not_scanned_files/';
 
-
-const upload = multer({ dest:  filesFolder});
-
-const opswat = new (require('./opswat'))({
-    domain: 'http://vault.bulwarx.com:8008',
-    filesLocation: './not_scanned_files/'
-});
-
-const backend = new (require('./backend'))({
-    server: 'https://www.menoramivt.co.il',
-    filesLocation: './not_scanned_files/'
-});
+const upload  = (require('multer'))({ dest:  config.filesLocation});
 
 
 const app = express();
@@ -25,42 +15,42 @@ const port = 3000;
 
 
 app.post('/*',upload.single('file'), async (req, res) => {
-
-    console.log(req.file,req.body);
-
+    let stopExec = 0;
     const { filename, originalname } = req.file;
+    const opswat = new Opswat({filename, originalname});
 
-    logger.info(`<${filename}>Req Url:${req.url} ${originalname}`);
+    logger.info(`<${filename}> url:${req.url} filename:${originalname}`);
 
-    const scan = await opswat.uploadFile({fileName: filename})
+    await opswat.uploadFile({fileName: filename})
         .catch((err) => {
-            logger.error(err);
-            res.send(err);
-        });
-    logger.info(`<${filename}>scan`);
-    switch (scan.status) {
-        case 'Allowed':
-            const options = {
-                fileName: filename,
-                originalName: originalname,
-                url: req.url
-            };
-
-            if (scan.sanitized_url) options.fileLocation = scan.sanitized_url;
-            const result = await backend.uploadFile(options);
-            logger.info(`<${filename}>result.data `);
-            res.send(result.data);
-            break;
-        case 'Blocked':
-        case 'Retry_limit':
+            logger.error(`<${filename}> ${err}`);
             res.send({"uploaded": false,"s3id": null,"name": originalname});
-            break;
+            stopExec = 1;
+        });
+
+    if (stopExec) return;
+
+    const scan = opswat.data.scan;
+
+    logger.info(`<${filename}> status:${scan.status} sanitized_url:${scan.sanitized_url}`);
+
+    if (scan.status === 'Allowed') {
+        const options = {
+            fileName: filename,
+            originalName: originalname,
+            url: req.url
+        };
+
+        if (scan.sanitized_url) options.fileLocation = scan.sanitized_url;
+        const result = await backend.uploadFile(options);
+        logger.info(`<${filename}> uploaded to backend`);
+        res.send(result.data);
+    } else {
+        res.send({"uploaded": false,"s3id": null,"name": originalname});
     }
 
 
-
-    opswat.deleteFromQueue({data_id:scan.data_id});
-    fs.unlinkSync(`${filesFolder}${filename}`);
+    fs.unlinkSync(`${config.filesLocation}${filename}`);
 });
 
 app.use(function (err, req, res, next) {
@@ -69,7 +59,7 @@ app.use(function (err, req, res, next) {
 });
 
 
-app.listen(port, () => console.log(`Application Started on port ${port}`));
+app.listen(port, () => logger.info('App started',config));
 
 
 
