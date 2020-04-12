@@ -2,7 +2,7 @@ This is a very very basic description maybe more will come.
 
 The idea behind the code is to be able to pass file to Opswat Metadefender scan them and upload them to the backend server.
 All of this without needing to change the front or backend applications.
-Pre requirnements:
+Pre requirements:
 F5 LTM
 Opswat Metadefender
 Backend server
