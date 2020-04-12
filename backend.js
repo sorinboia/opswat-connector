@@ -36,7 +36,7 @@ class Backend {
         }).catch((err) => {
             console.log(err);
         });
-        return result.data;
+        return result;
     }
 
 }

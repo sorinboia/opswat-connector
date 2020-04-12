@@ -1,5 +1,4 @@
 const axios = require('axios');
-const fs = require('fs');
 const logger = require('./logger');
 const { opswat, filesLocation } = require('./config');
 
@@ -7,16 +6,14 @@ const { opswat, filesLocation } = require('./config');
 
 
 class Opswat {
-    constructor({filename,originalname}) {
+    constructor({filename, fileBuffer}) {
         this.domain = opswat.url;
         this.statusRetry = opswat.statusRetry;
         this.statusInterval = opswat.statusInterval;
-        this.filesLocation = filesLocation;
         this.data = {
             filename,
-            originalname
+            fileBuffer
         };
-
     }
 
 
@@ -41,10 +38,7 @@ class Opswat {
 
     uploadFile() {
         return new Promise(async (res,rej) => {
-
             let stopExec = 0;
-
-            const file = fs.readFileSync(this.filesLocation + this.data.filename);
 
             const result = await axios({
                 method: 'POST',
@@ -52,7 +46,7 @@ class Opswat {
                 headers: {
                     filename: this.data.filename,
                 },
-                data: file
+                data: this.data.fileBuffer
             }).catch((err) => {
                 rej(`upload to Opswat error ${err}`);
                 stopExec = 1;

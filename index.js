@@ -1,12 +1,12 @@
 const express = require('express');
 const logger = require('./logger');
-const fs = require('fs');
 const Opswat = require('./opswat');
 const backend = require('./backend');
 const config  = require('./config');
 
-
-const upload  = (require('multer'))({ dest:  config.filesLocation});
+const multer  = require('multer');
+const storage = multer.memoryStorage();
+const upload  = multer({ storage: storage });
 
 
 const app = express();
@@ -16,15 +16,15 @@ const port = 3000;
 
 app.post('/*',upload.single('file'), async (req, res) => {
     let stopExec = 0;
-    const { filename, originalname } = req.file;
-    const opswat = new Opswat({filename, originalname});
+    const { originalname } = req.file;
+    const opswat = new Opswat({filename: originalname, fileBuffer:req.file.buffer});
 
-    logger.info(`<${filename}> url:${req.url} filename:${originalname}`);
+    logger.info(`<${originalname}> url:${req.url} filename:${originalname}`);
 
-    await opswat.uploadFile({fileName: filename})
+    await opswat.uploadFile({buf:req.file.buffer})
         .catch((err) => {
-            logger.error(`<${filename}> ${err}`);
-            res.send({"uploaded": false,"s3id": null,"name": originalname});
+            logger.error(`<${originalname}> ${err}`);
+            res.send({"err":"fail1","data":{"uploaded": false,"s3id": null,"name": originalname}});
             stopExec = 1;
         });
 
@@ -32,25 +32,29 @@ app.post('/*',upload.single('file'), async (req, res) => {
 
     const scan = opswat.data.scan;
 
-    logger.info(`<${filename}> status:${scan.status} sanitized_url:${scan.sanitized_url}`);
+    logger.info(`<${originalname}> status:${scan.status} sanitized_url:${scan.sanitized_url}`);
+
 
     if (scan.status === 'Allowed') {
+
+        if (!scan.sanitized_url) {
+            res.send({ "err": "fail3","data": {"uploaded": false,"s3id": null,"name": originalname}})
+            logger.info(`<${originalname}> Allowed but not sanitized`);
+            return;
+        }
+
         const options = {
-            fileName: filename,
             originalName: originalname,
-            url: req.url
+            url: req.url,
+            fileLocation: scan.sanitized_url
         };
 
-        if (scan.sanitized_url) options.fileLocation = scan.sanitized_url;
         const result = await backend.uploadFile(options);
-        logger.info(`<${filename}> uploaded to backend`);
+        logger.info(`<${originalname}> uploaded to backend`);
         res.send(result.data);
     } else {
-        res.send({"uploaded": false,"s3id": null,"name": originalname});
+        res.send({"err":"fail2","data":{"uploaded": false,"s3id": null,"name": originalname}});
     }
-
-
-    fs.unlinkSync(`${config.filesLocation}${filename}`);
 });
 
 app.use(function (err, req, res, next) {
