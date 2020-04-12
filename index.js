@@ -12,7 +12,9 @@ const upload  = multer({ storage: storage });
 const app = express();
 const port = 3000;
 
-
+app.get('/health', (req,res) => {
+   res.send(200);
+});
 
 app.post('/*',upload.single('file'), async (req, res) => {
     let stopExec = 0;
