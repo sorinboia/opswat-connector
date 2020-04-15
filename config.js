@@ -3,7 +3,6 @@ const argv = require('yargs').argv;
 
 
 let config = {
-    filesLocation: './not_scanned_files/'
 };
 
 config.opswat = {

@@ -1,4 +1,5 @@
 const express = require('express');
+const uuidv4 = require('uuid').v4;
 const logger = require('./logger');
 const Opswat = require('./opswat');
 const backend = require('./backend');
@@ -17,15 +18,26 @@ app.get('/health', (req,res) => {
 });
 
 app.post('/*',upload.single('file'), async (req, res) => {
+
+    const id = uuidv4();
+
+    logger.info(`<${id}> url:${req.url} xff:${req.headers['x-forwarded-for']} client_ip:${req.connection.remoteAddress}`);
+
+    if (!req.file) {
+        res.send({"err":"no_file","data":{"uploaded": false,"s3id": null,"name": originalname}});
+        logger.error(`<${id}> no file posted`);
+        return;
+    }
+
     let stopExec = 0;
     const { originalname } = req.file;
     const opswat = new Opswat({filename: originalname, fileBuffer:req.file.buffer});
 
-    logger.info(`<${originalname}> url:${req.url} filename:${originalname}`);
+    logger.info(`<${id}> filename:${originalname}`);
 
     await opswat.uploadFile({buf:req.file.buffer})
         .catch((err) => {
-            logger.error(`<${originalname}> ${err}`);
+            logger.error(`<${id}> opswat ${err}`);
             res.send({"err":"fail1","data":{"uploaded": false,"s3id": null,"name": originalname}});
             stopExec = 1;
         });
@@ -34,14 +46,14 @@ app.post('/*',upload.single('file'), async (req, res) => {
 
     const scan = opswat.data.scan;
 
-    logger.info(`<${originalname}> status:${scan.status} sanitized_url:${scan.sanitized_url}`);
+    logger.info(`<${id}> status:${scan.status} sanitized_url:${scan.sanitized_url}`);
 
 
     if (scan.status === 'Allowed') {
 
         if (!scan.sanitized_url) {
             res.send({ "err": "fail3","data": {"uploaded": false,"s3id": null,"name": originalname}})
-            logger.info(`<${originalname}> Allowed but not sanitized`);
+            logger.info(`<${id}> Allowed but not sanitized`);
             return;
         }
 
@@ -51,9 +63,16 @@ app.post('/*',upload.single('file'), async (req, res) => {
             fileLocation: scan.sanitized_url
         };
 
-        const result = await backend.uploadFile(options);
-        logger.info(`<${originalname}> uploaded to backend`);
-        res.send(result.data);
+        const result = await backend.uploadFile(options)
+            .catch((err) => {
+                logger.error(`<${id}> backend ${err}`)
+                res.send({"err":"fail4","data":{"uploaded": false,"s3id": null,"name": originalname}});
+            });
+        if(result) {
+            logger.info(`<${id}> uploaded to backend`);
+            res.send(result.data);
+        }
+
     } else {
         res.send({"err":"fail2","data":{"uploaded": false,"s3id": null,"name": originalname}});
     }

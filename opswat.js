@@ -1,7 +1,10 @@
 const axios = require('axios');
 const logger = require('./logger');
-const { opswat, filesLocation } = require('./config');
+const { opswat } = require('./config');
 
+const axiosCookieJarSupport = require('axios-cookiejar-support').default;
+const tough = require('tough-cookie');
+axiosCookieJarSupport(axios);
 
 
 
@@ -14,6 +17,10 @@ class Opswat {
             filename,
             fileBuffer
         };
+        this.axios = axios.create({
+            jar: new tough.CookieJar(),
+            withCredentials: true
+        });
     }
 
 
@@ -25,7 +32,7 @@ class Opswat {
             return Promise.reject('retry limit reached');
 
 
-        const status = await axios.get( `${this.domain}/${scan.data_id}`);
+        const status = await this.axios.get( `${this.domain}/${scan.data_id}`);
 
         scan.status = status.data.process_info.result;
         scan.post_processing = status.data.process_info.post_processing;
@@ -40,7 +47,7 @@ class Opswat {
         return new Promise(async (res,rej) => {
             let stopExec = 0;
 
-            const result = await axios({
+            const result = await this.axios({
                 method: 'POST',
                 url: this.domain,
                 headers: {
