@@ -38,7 +38,7 @@ app.post('/*',upload.single('file'), async (req, res) => {
     await opswat.uploadFile({buf:req.file.buffer})
         .catch((err) => {
             logger.error(`<${id}> opswat ${err}`);
-            res.send({"err":"fail1","data":{"uploaded": false,"s3id": null,"name": originalname}});
+            res.status(500).send({"err":"fail1","data":{"uploaded": false,"s3id": null,"name": originalname}});
             stopExec = 1;
         });
 
@@ -65,8 +65,8 @@ app.post('/*',upload.single('file'), async (req, res) => {
 
         const result = await backend.uploadFile(options)
             .catch((err) => {
-                logger.error(`<${id}> backend ${err}`)
-                res.send({"err":"fail4","data":{"uploaded": false,"s3id": null,"name": originalname}});
+                logger.error(`<${id}> backend ${err}`);
+                res.status(500).send({"err":"fail4","data":{"uploaded": false,"s3id": null,"name": originalname}});
             });
         if(result) {
             logger.info(`<${id}> uploaded to backend`);

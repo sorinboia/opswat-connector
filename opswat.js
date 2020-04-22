@@ -4,7 +4,7 @@ const { opswat } = require('./config');
 
 const axiosCookieJarSupport = require('axios-cookiejar-support').default;
 const tough = require('tough-cookie');
-axiosCookieJarSupport(axios);
+
 
 
 
@@ -17,10 +17,13 @@ class Opswat {
             filename,
             fileBuffer
         };
+
         this.axios = axios.create({
-            jar: new tough.CookieJar(),
             withCredentials: true
         });
+        axiosCookieJarSupport(this.axios);
+        this.axios.defaults.jar = new tough.CookieJar();
+
     }
 
 
@@ -30,7 +33,6 @@ class Opswat {
 
         if (++scan.retry > this.statusRetry)
             return Promise.reject('retry limit reached');
-
 
         const status = await this.axios.get( `${this.domain}/${scan.data_id}`);
 
