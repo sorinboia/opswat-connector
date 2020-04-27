@@ -6,16 +6,19 @@ const config = require('./config');
 
 class Backend {
 
-    constructor({server,filesLocation}) {
+    constructor({server, filesLocation, opswatAxios}) {
         this.filesLocation = filesLocation ;
         this.server = server;
+
+        console.log( ' OPSWATAXIOS',opswatAxios);
+
     }
 
-     uploadFile({url,fileLocation,fileName,originalName}) {
+     uploadFile({url,fileLocation,fileName,originalName, opswatAxios}) {
         return new Promise(async (res,rej) => {
             const location = fileLocation || this.filesLocation;
             const file = location.indexOf('http') === 0 ?
-                (await axios({
+                (await opswatAxios({
                     url:location,
                     method: 'GET',
                     responseType: 'stream'

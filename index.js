@@ -63,7 +63,8 @@ app.post('/*',upload.single('file'), async (req, res) => {
         const options = {
             originalName: originalname,
             url: req.url,
-            fileLocation: scan.sanitized_url
+            fileLocation: scan.sanitized_url,
+            opswatAxios: opswat.axios
         };
 
         const result = await backend.uploadFile(options)
