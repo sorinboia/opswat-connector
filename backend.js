@@ -9,9 +9,6 @@ class Backend {
     constructor({server, filesLocation, opswatAxios}) {
         this.filesLocation = filesLocation ;
         this.server = server;
-
-        console.log( ' OPSWATAXIOS',opswatAxios);
-
     }
 
      uploadFile({url,fileLocation,fileName,originalName, opswatAxios}) {
