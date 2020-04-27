@@ -5,6 +5,7 @@ const Opswat = require('./opswat');
 const backend = require('./backend');
 const config  = require('./config');
 
+
 const multer  = require('multer');
 const storage = multer.memoryStorage();
 const upload  = multer({ storage: storage });
@@ -30,10 +31,12 @@ app.post('/*',upload.single('file'), async (req, res) => {
     }
 
     let stopExec = 0;
-    const { originalname } = req.file;
-    const opswat = new Opswat({filename: originalname, fileBuffer:req.file.buffer});
 
-    logger.info(`<${id}> filename:${originalname}`);
+    const originalname = req.file.originalname;
+    const encoded_originalname = encodeURIComponent( req.file.originalname);
+    const opswat = new Opswat({filename: encoded_originalname, fileBuffer:req.file.buffer});
+
+    logger.info(`<${id}> filename:${encoded_originalname}`);
 
     await opswat.uploadFile({buf:req.file.buffer})
         .catch((err) => {
