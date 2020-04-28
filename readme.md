@@ -15,4 +15,4 @@ When starting the container you need to pass ENV variables of Opswat server and 
 
 Example:
 
-docker run -e OPSWAT=http://vault.bulwarx.com:8008/file -e BACKEND=https://www.thebackendserver.com  -p 3000:3000 sorinboia/opswat-connector
+docker run -e OPSWAT=http://vault.bulwarx.com:8008/file -e BACKEND=https://www.thebackendserver.com  -e RETRY=10 -e INTERVAL=1000 -p 3000:3000 sorinboia/opswat-connector
